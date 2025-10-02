@@ -6,6 +6,14 @@ import sys
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 MAX_PATCH_CHARS = 20000  # safety limit
 
+# Supported OpenAI models
+supported_models = ["gpt-4o-mini", "gpt-4", "gpt-3.5-turbo"]
+if OPENAI_MODEL not in supported_models:
+    print(f"⚠️ Warning: Model '{OPENAI_MODEL}' is not in the list of tested models. Supported: {', '.join(supported_models)}")
+
+# File extensions to review (code files)
+code_extensions = ['.py', '.js', '.ts', '.java', '.c', '.cpp', '.h', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala']
+
 event_path = os.getenv("GITHUB_EVENT_PATH")
 if not event_path:
     raise SystemExit("No event payload found")
@@ -35,8 +43,9 @@ files = resp.json()
 patches = []
 for f in files[:10]:
     name = f.get("filename")
-    patch = f.get("patch") or "[no diff available]"
-    patches.append(f"File: {name}\n{patch}\n")
+    if name and any(name.endswith(ext) for ext in code_extensions):
+        patch = f.get("patch") or "[no diff available]"
+        patches.append(f"File: {name}\n{patch}\n")
 diff_text = "\n".join(patches)[:MAX_PATCH_CHARS]
 
 # Ask OpenAI for a review
@@ -47,7 +56,22 @@ if not openai_api_key:
 
 try:
     client = OpenAI(api_key=openai_api_key)
-    prompt = f"Review this Pull Request:\nTitle: {pr.get('title')}\nBody: {pr.get('body')}\nDiffs:\n{diff_text}"
+    prompt = f"""Review this Pull Request as a senior code reviewer. Provide constructive feedback on:
+
+- Code quality and readability
+- Potential bugs or errors
+- Security vulnerabilities
+- Best practices and conventions
+- Performance issues
+- Suggestions for improvements
+
+Pull Request Title: {pr.get('title')}
+
+Body: {pr.get('body')}
+
+Diffs (only code files included):
+
+{diff_text}"""
 
     resp = client.chat.completions.create(
         model=OPENAI_MODEL,
