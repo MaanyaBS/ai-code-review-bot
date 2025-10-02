@@ -4,32 +4,29 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
 
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
-
 jobs:
   review:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.9"
+
+      - name: Debug - List repo files
+        run: ls -R .github
 
       - name: Install dependencies
-        run: python -m pip install -r .github/scripts/requirements.txt
-      
-      - name: Debug folder structure
-        run: ls -R .github
-      
-      
-      - name: Run AI review script
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/scripts/requirements.txt
+
+      - name: Run AI Code Review Script
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python .github/scripts/review_pr.py

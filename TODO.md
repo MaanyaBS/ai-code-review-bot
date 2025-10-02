@@ -1,0 +1,3 @@
+- [x] Add file type filtering in review_pr.py to only process code files
+- [x] Improve the review prompt for more detailed feedback
+- [x] Add model validation or enhancement
