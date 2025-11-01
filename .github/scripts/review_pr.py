@@ -1,95 +1,169 @@
 #!/usr/bin/env python3
-import os, json, requests
-from openai import OpenAI
+import os
+import subprocess
 import sys
+import openai
+from pathlib import Path
+import tempfile
+import shutil
 
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-MAX_PATCH_CHARS = 20000  # safety limit
+# Set OpenAI API key from environment
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if not openai.api_key:
+    raise SystemExit("OPENAI_API_KEY environment variable is not set. Please provide your own OpenAI API key.")
 
-# Supported OpenAI models
-supported_models = ["gpt-4o-mini", "gpt-4", "gpt-3.5-turbo"]
-if OPENAI_MODEL not in supported_models:
-    print(f"⚠️ Warning: Model '{OPENAI_MODEL}' is not in the list of tested models. Supported: {', '.join(supported_models)}")
+def run_linter(file_path):
+    """Run pylint and flake8 on a file and return issues."""
+    issues = []
 
-# File extensions to review (code files)
-code_extensions = ['.py', '.js', '.ts', '.java', '.c', '.cpp', '.h', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala']
+    # Run pylint
+    try:
+        pylint_result = subprocess.run(['pylint', file_path, '--output-format=text'], capture_output=True, text=True, cwd=os.getcwd())
+        if pylint_result.returncode != 0:
+            issues.append(f"Pylint issues in {file_path}:\n{pylint_result.stdout}\n{pylint_result.stderr}")
+    except Exception as e:
+        issues.append(f"Error running pylint on {file_path}: {e}")
 
-event_path = os.getenv("GITHUB_EVENT_PATH")
-if not event_path:
-    raise SystemExit("No event payload found")
+    # Run flake8
+    try:
+        flake8_result = subprocess.run(['flake8', file_path], capture_output=True, text=True, cwd=os.getcwd())
+        if flake8_result.returncode != 0:
+            issues.append(f"Flake8 issues in {file_path}:\n{flake8_result.stdout}\n{flake8_result.stderr}")
+    except Exception as e:
+        issues.append(f"Error running flake8 on {file_path}: {e}")
 
-with open(event_path, "r") as f:
-    event = json.load(f)
+    return issues
 
-pr = event.get("pull_request")
-if not pr:
-    print("Not a PR event")
-    raise SystemExit(0)
+def get_ai_fix(code, issues):
+    """Use OpenAI to generate a fix for the code based on linter issues."""
+    prompt = f"""
+You are a code review assistant. The following Python code has linter issues:
 
-owner = event["repository"]["owner"]["login"]
-repo = event["repository"]["name"]
-pr_number = pr["number"]
+Code:
+{code}
 
-# GitHub headers
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
+Issues:
+{issues}
 
-# Fetch PR file diffs
-files_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/files"
-resp = requests.get(files_url, headers=headers)
-resp.raise_for_status()
-files = resp.json()
+Please provide the corrected code that fixes these issues. Return only the corrected code, no explanations.
+"""
 
-patches = []
-for f in files[:10]:
-    name = f.get("filename")
-    if name and any(name.endswith(ext) for ext in code_extensions):
-        patch = f.get("patch") or "[no diff available]"
-        patches.append(f"File: {name}\n{patch}\n")
-diff_text = "\n".join(patches)[:MAX_PATCH_CHARS]
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1000,
+            temperature=0.1
+        )
+        fixed_code = response.choices[0].message.content.strip()
+        return fixed_code
+    except Exception as e:
+        print(f"Error getting AI fix: {e}")
+        return None
 
-# Ask OpenAI for a review
-openai_api_key = os.getenv("OPENAI_API_KEY")
-if not openai_api_key:
-    print("❌ Error: OPENAI_API_KEY environment variable is not set")
-    raise SystemExit(1)
+def apply_fix(file_path, fixed_code):
+    """Apply the AI-generated fix to the file."""
+    try:
+        with open(file_path, 'w') as f:
+            f.write(fixed_code)
+        print(f"Applied fix to {file_path}")
+        return True
+    except Exception as e:
+        print(f"Error applying fix to {file_path}: {e}")
+        return False
 
-try:
-    client = OpenAI(api_key=openai_api_key)
-    prompt = f"""Review this Pull Request as a senior code reviewer. Provide constructive feedback on:
+def create_branch_and_commit(files_to_commit, branch_name="ai-code-fixes"):
+    """Create a new branch, add files, commit, and push."""
+    try:
+        # Create new branch
+        subprocess.run(['git', 'checkout', '-b', branch_name], check=True, cwd=os.getcwd())
 
-- Code quality and readability
-- Potential bugs or errors
-- Security vulnerabilities
-- Best practices and conventions
-- Performance issues
-- Suggestions for improvements
+        # Add files
+        for file in files_to_commit:
+            subprocess.run(['git', 'add', file], check=True, cwd=os.getcwd())
 
-Pull Request Title: {pr.get('title')}
+        # Commit
+        subprocess.run(['git', 'commit', '-m', 'AI-generated code fixes'], check=True, cwd=os.getcwd())
 
-Body: {pr.get('body')}
+        # Push
+        subprocess.run(['git', 'push', '-u', 'origin', branch_name], check=True, cwd=os.getcwd())
 
-Diffs (only code files included):
+        print(f"Created branch '{branch_name}' and pushed changes.")
+        return branch_name
+    except subprocess.CalledProcessError as e:
+        print(f"Error in git operations: {e}")
+        return None
 
-{diff_text}"""
+def create_pr(branch_name, title="AI Code Fixes", body="Automated code fixes generated by AI based on linter issues."):
+    """Create a pull request using GitHub CLI."""
+    try:
+        # Check if gh is installed
+        subprocess.run(['gh', '--version'], check=True, capture_output=True)
 
-    resp = client.chat.completions.create(
-        model=OPENAI_MODEL,
-        messages=[
-            {"role": "system", "content": "You are a senior code reviewer."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.2,
-        max_tokens=800,
-    )
-    review = resp.choices[0].message.content
-except Exception as e:
-    print(f"❌ Error calling OpenAI API: {e}")
-    raise SystemExit(1)
+        # Create PR
+        result = subprocess.run(['gh', 'pr', 'create', '--title', title, '--body', body, '--head', branch_name], capture_output=True, text=True, cwd=os.getcwd())
+        if result.returncode == 0:
+            print(f"Pull request created: {result.stdout.strip()}")
+            return True
+        else:
+            print(f"Error creating PR: {result.stderr}")
+            return False
+    except subprocess.CalledProcessError as e:
+        print(f"GitHub CLI not installed or not authenticated. Please install gh and run 'gh auth login'. Error: {e}")
+        return False
 
-# Post comment back to PR
-comments_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/comments"
-post_resp = requests.post(comments_url, headers=headers, json={"body": review})
-post_resp.raise_for_status()
+def main():
+    # Find all Python files in the current directory
+    python_files = list(Path('.').rglob('*.py'))
 
-print("✅ Review posted to PR", pr_number)
+    if not python_files:
+        print("No Python files found in the current directory.")
+        return
+
+    files_with_issues = []
+    fixed_files = []
+
+    for file_path in python_files:
+        print(f"Checking {file_path}...")
+        issues = run_linter(str(file_path))
+        if issues:
+            files_with_issues.append((file_path, issues))
+            print(f"Found {len(issues)} issue(s) in {file_path}")
+
+            # Read the code
+            try:
+                with open(file_path, 'r') as f:
+                    code = f.read()
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}")
+                continue
+
+            # Get AI fix
+            all_issues = '\n'.join(issues)
+            fixed_code = get_ai_fix(code, all_issues)
+            if fixed_code:
+                # Apply fix
+                if apply_fix(file_path, fixed_code):
+                    fixed_files.append(str(file_path))
+                else:
+                    print(f"Failed to apply fix to {file_path}")
+            else:
+                print(f"Failed to get AI fix for {file_path}")
+        else:
+            print(f"No issues found in {file_path}")
+
+    if fixed_files:
+        print(f"\nFixed {len(fixed_files)} file(s): {', '.join(fixed_files)}")
+
+        # Create branch and commit
+        branch_name = create_branch_and_commit(fixed_files)
+        if branch_name:
+            # Create PR
+            create_pr(branch_name)
+        else:
+            print("Failed to create branch and commit changes.")
+    else:
+        print("No files were fixed.")
+
+if __name__ == '__main__':
+    main()
