@@ -8,37 +8,39 @@
 </head>
 <body>
     <header>
-        <h1>AI Code Review Bot</h1>
-        <p>Automated Code Quality Analysis for GitHub Pull Requests using Static Analysis Tools</p>
+        <h1>🤖 AI Code Review Bot</h1>
+        <p>Hybrid Code Quality Analysis: Automatic Formatters + Optional AI Corrections</p>
     </header>
 
     <section id="introduction">
         <h2>Introduction</h2>
-        <p>The AI Code Review Bot is a GitHub Action that automatically reviews code changes in pull requests using industry-standard static analysis tools (Pylint & Flake8). It provides instant feedback on code quality, style violations, and potential issues to maintain high coding standards.</p>
+        <p>The AI Code Review Bot is a revolutionary hybrid system that combines the speed of automatic code formatters with the intelligence of AI-powered corrections. It works locally on your machine and creates pull requests with fixed code, providing the best of both worlds: fast automatic fixes for common issues + intelligent AI corrections for complex problems.</p>
     </section>
 
     <section id="features">
         <h2>Key Features</h2>
         <ul>
-            <li><strong>Automated Reviews:</strong> Triggers on every pull request to provide instant feedback</li>
-            <li><strong>Static Analysis:</strong> Uses Pylint and Flake8 for comprehensive code quality checks</li>
-            <li><strong>Cost-Free:</strong> No API costs - runs entirely on GitHub Actions infrastructure</li>
-            <li><strong>Multi-Language Support:</strong> Supports Python, JavaScript, TypeScript, Java, C++, and more</li>
+            <li><strong>Hybrid Approach:</strong> Automatic formatters (autopep8, isort) + Optional AI corrections</li>
+            <li><strong>Local Operation:</strong> Runs entirely on your machine, no GitHub Actions needed</li>
+            <li><strong>No API Required:</strong> Works with just automatic formatters for basic fixes</li>
+            <li><strong>Optional AI Enhancement:</strong> Add OpenAI API key for advanced code corrections</li>
+            <li><strong>PR Creation:</strong> Automatically creates pull requests for easy code review</li>
             <li><strong>Industry Standards:</strong> Enforces PEP 8 style guidelines and best practices</li>
-            <li><strong>GitHub Integration:</strong> Seamlessly posts detailed comments directly on pull requests</li>
+            <li><strong>Multi-Tool Integration:</strong> Uses pylint, flake8, autopep8, and isort</li>
         </ul>
     </section>
 
     <section id="how-it-works">
         <h2>How It Works</h2>
         <ol>
-            <li>A developer creates a pull request on GitHub</li>
-            <li>The GitHub Action workflow is triggered automatically</li>
-            <li>The bot fetches the code changes from the PR via GitHub API</li>
-            <li>It filters for relevant code files and runs static analysis tools</li>
-            <li>Pylint checks for code quality, documentation, and potential bugs</li>
-            <li>Flake8 enforces style guidelines and catches syntax issues</li>
-            <li>The comprehensive review is posted as a comment on the pull request</li>
+            <li>Developer runs the bot locally: <code>python .github/scripts/review_pr.py</code></li>
+            <li>The bot scans all Python files in the current directory for linter issues</li>
+            <li><strong>First:</strong> Applies automatic formatting fixes using autopep8 and isort (fast, no API needed)</li>
+            <li><strong>Then:</strong> If OpenAI API key is provided, uses AI to fix remaining complex issues</li>
+            <li>Creates a new git branch with the fixes</li>
+            <li>Commits changes and pushes to GitHub</li>
+            <li>Automatically creates a pull request for code review</li>
+            <li>Merge the PR to apply the corrections to your codebase</li>
         </ol>
     </section>
 
@@ -47,10 +49,12 @@
         <div class="architecture-diagram">
             <h3>Workflow Components</h3>
             <ul>
-                <li><strong>.github/workflows/ai-review.yml:</strong> GitHub Actions workflow configuration</li>
-                <li><strong>.github/scripts/review_pr.py:</strong> Main Python script handling PR analysis</li>
-                <li><strong>.github/scripts/requirements.txt:</strong> Python dependencies (requests, pylint, flake8)</li>
+                <li><strong>.github/scripts/review_pr.py:</strong> Main Python script with hybrid approach</li>
+                <li><strong>.github/scripts/requirements.txt:</strong> Python dependencies (openai, pylint, flake8, autopep8, isort)</li>
+                <li><strong>Automatic Formatters:</strong> autopep8 (PEP8 formatting), isort (import sorting)</li>
                 <li><strong>Static Analysis Tools:</strong> Pylint for code quality, Flake8 for style enforcement</li>
+                <li><strong>AI Enhancement:</strong> OpenAI GPT-3.5 for complex code corrections (optional)</li>
+                <li><strong>Git Integration:</strong> Automatic branch creation, commit, and PR creation via GitHub CLI</li>
             </ul>
         </div>
     </section>
@@ -129,27 +133,71 @@ C0116: Missing function or method docstring (missing-function-docstring)</pre>
         <h2>Setup Instructions</h2>
         <ol>
             <li>Fork or clone the repository</li>
-            <li>Copy the <code>.github/workflows/</code> and <code>.github/scripts/</code> folders to your repository</li>
-            <li>The workflow will automatically install required dependencies (pylint, flake8)</li>
-            <li>Create a pull request to test the bot</li>
-            <li>The bot will post automated reviews on all future PRs</li>
+            <li>Install dependencies: <code>pip install -r .github/scripts/requirements.txt</code></li>
+            <li>Authenticate GitHub CLI: <code>gh auth login</code></li>
+            <li><strong>Optional:</strong> Set OpenAI API key for AI corrections: <code>set OPENAI_API_KEY=your_key_here</code></li>
+            <li>Run the bot locally: <code>python .github/scripts/review_pr.py</code></li>
+            <li>The bot will scan files, apply fixes, and create a pull request automatically</li>
         </ol>
     </section>
 
     <section id="technologies">
         <h2>Technologies Used</h2>
         <ul>
-            <li><strong>GitHub Actions:</strong> CI/CD platform for automated workflows</li>
             <li><strong>Python:</strong> Core scripting language</li>
-            <li><strong>Pylint:</strong> Static code analysis for code quality</li>
-            <li><strong>Flake8:</strong> Style guide enforcement and error detection</li>
-            <li><strong>Requests:</strong> HTTP library for GitHub API integration</li>
+            <li><strong>Pylint & Flake8:</strong> Static code analysis and style enforcement</li>
+            <li><strong>Autopep8 & Isort:</strong> Automatic code formatting and import sorting</li>
+            <li><strong>OpenAI GPT-3.5:</strong> AI-powered code corrections (optional)</li>
+            <li><strong>GitHub CLI:</strong> Command-line interface for GitHub operations</li>
+            <li><strong>Git:</strong> Version control for branch management and commits</li>
         </ul>
     </section>
 
+    <section id="demo-run">
+        <h2>Live Demo</h2>
+        <p>Click below to see the bot in action:</p>
+        <button onclick="runDemo()" class="demo-button">🚀 Run AI Code Review Bot Demo</button>
+        <div id="demo-output" class="demo-output" style="display: none;">
+            <h3>Demo Results:</h3>
+            <pre id="demo-results">
+🤖 AI Code Review Bot - Starting Analysis...
+
+✅ Detected 13 linter issues across 4 Python files
+✅ Applied automatic formatting fixes (autopep8, isort)
+✅ Created branch 'ai-code-fixes'
+✅ Committed changes with detailed message
+✅ Pushed to GitHub successfully
+✅ Created Pull Request #10: "🤖 AI Code Review: Auto-fixed linter issues"
+
+🎉 All fixes applied successfully! Ready for code review.
+            </pre>
+        </div>
+    </section>
+
     <footer>
-        <p>&copy; 2025 AI Code Review Bot. Built with GitHub Actions, Python, and Static Analysis Tools.</p>
+        <p>&copy; 2025 AI Code Review Bot. Built with Python, AI, and GitHub Integration.</p>
         <p><a href="https://github.com/MaanyaBS/ai-code-review-bot">View Source Code on GitHub</a></p>
     </footer>
+
+    <script>
+        function runDemo() {
+            const output = document.getElementById('demo-output');
+            const results = document.getElementById('demo-results');
+            output.style.display = 'block';
+
+            // Simulate typing effect
+            const text = results.textContent;
+            results.textContent = '';
+            let i = 0;
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    results.textContent += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                }
+            }, 50);
+        }
+    </script>
 </body>
 </html>
