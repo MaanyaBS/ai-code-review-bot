@@ -1,3 +1,8 @@
-- [x] Add file type filtering in review_pr.py to only process code files
-- [x] Improve the review prompt for more detailed feedback
-- [x] Add model validation or enhancement
+- [x] Update .github/scripts/requirements.txt: Add openai, autopep8, and isort for hybrid approach
+- [x] Rewrite .github/scripts/review_pr.py: Convert to local script with hybrid approach - automatic formatters first, then optional AI fixes, creates PR using gh CLI
+- [x] Update README.md: Describe the hybrid approach (auto-formatters + optional AI), local operation, and PR creation
+- [x] Modify .github/workflows/ai-review.yml: Remove or disable PR triggers since the bot now runs locally
+- [x] Install dependencies (pip install -r .github/scripts/requirements.txt)
+- [x] Ensure GitHub CLI (gh) is installed for PR creation
+- [x] Update this TODO.md as tasks are completed
+- [ ] Test locally with bad_code.py: Run script to detect issues, apply auto-fixes, optionally use AI, and create a test PR
