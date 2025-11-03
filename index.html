@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Review Bot - Static Analysis Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>AI Code Review Bot</h1>
+        <p>Automated Code Quality Analysis for GitHub Pull Requests using Static Analysis Tools</p>
+    </header>
+
+    <section id="introduction">
+        <h2>Introduction</h2>
+        <p>The AI Code Review Bot is a GitHub Action that automatically reviews code changes in pull requests using industry-standard static analysis tools (Pylint & Flake8). It provides instant feedback on code quality, style violations, and potential issues to maintain high coding standards.</p>
+    </section>
+
+    <section id="features">
+        <h2>Key Features</h2>
+        <ul>
+            <li><strong>Automated Reviews:</strong> Triggers on every pull request to provide instant feedback</li>
+            <li><strong>Static Analysis:</strong> Uses Pylint and Flake8 for comprehensive code quality checks</li>
+            <li><strong>Cost-Free:</strong> No API costs - runs entirely on GitHub Actions infrastructure</li>
+            <li><strong>Multi-Language Support:</strong> Supports Python, JavaScript, TypeScript, Java, C++, and more</li>
+            <li><strong>Industry Standards:</strong> Enforces PEP 8 style guidelines and best practices</li>
+            <li><strong>GitHub Integration:</strong> Seamlessly posts detailed comments directly on pull requests</li>
+        </ul>
+    </section>
+
+    <section id="how-it-works">
+        <h2>How It Works</h2>
+        <ol>
+            <li>A developer creates a pull request on GitHub</li>
+            <li>The GitHub Action workflow is triggered automatically</li>
+            <li>The bot fetches the code changes from the PR via GitHub API</li>
+            <li>It filters for relevant code files and runs static analysis tools</li>
+            <li>Pylint checks for code quality, documentation, and potential bugs</li>
+            <li>Flake8 enforces style guidelines and catches syntax issues</li>
+            <li>The comprehensive review is posted as a comment on the pull request</li>
+        </ol>
+    </section>
+
+    <section id="architecture">
+        <h2>System Architecture</h2>
+        <div class="architecture-diagram">
+            <h3>Workflow Components</h3>
+            <ul>
+                <li><strong>.github/workflows/ai-review.yml:</strong> GitHub Actions workflow configuration</li>
+                <li><strong>.github/scripts/review_pr.py:</strong> Main Python script handling PR analysis</li>
+                <li><strong>.github/scripts/requirements.txt:</strong> Python dependencies (requests, pylint, flake8)</li>
+                <li><strong>Static Analysis Tools:</strong> Pylint for code quality, Flake8 for style enforcement</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="demo">
+        <h2>Demo Output</h2>
+        <p>Here's an example of the bot's review output:</p>
+        <div class="code-example">
+            <h3>Example Code Review Comment</h3>
+            <blockquote>
+                <p><strong>Code Review</strong></p>
+                <p>Issues found by static analysis:</p>
+                <p><strong>Pylint issues in utils.py:</strong></p>
+                <pre>C0114: Missing module docstring (missing-module-docstring)
+C0116: Missing function or method docstring (missing-function-docstring)</pre>
+                <p><strong>Flake8 issues in utils.py:</strong></p>
+                <pre>utils.py:1:1: F401 'os' imported but unused</pre>
+                <p><strong>Pull Request Summary:</strong></p>
+                <ul>
+                    <li>Title: Add utility functions</li>
+                    <li>Files changed: 2</li>
+                </ul>
+                <p>Please address the linter issues for better code quality.</p>
+            </blockquote>
+        </div>
+        <div class="code-example">
+            <h3>Clean Code Example</h3>
+            <blockquote>
+                <p><strong>Code Review</strong></p>
+                <p>✅ No major issues found by static analysis tools (pylint, flake8).</p>
+                <p><strong>Pull Request Summary:</strong></p>
+                <ul>
+                    <li>Title: Refactor authentication module</li>
+                    <li>Files changed: 3</li>
+                </ul>
+                <p>The code looks good! Keep up the great work.</p>
+            </blockquote>
+        </div>
+    </section>
+
+    <section id="testing">
+        <h2>Comprehensive Testing</h2>
+        <p>The bot has been thoroughly tested with multiple scenarios:</p>
+        <ul>
+            <li><strong>Unit Testing:</strong> Individual component testing with mock data</li>
+            <li><strong>Integration Testing:</strong> End-to-end workflow simulation</li>
+            <li><strong>Edge Case Testing:</strong> Empty PRs, multiple files, linter failures</li>
+            <li><strong>Error Handling:</strong> Invalid events, missing environment variables</li>
+            <li><strong>Performance Testing:</strong> Large PRs with multiple code files</li>
+        </ul>
+    </section>
+
+    <section id="benefits">
+        <h2>Benefits</h2>
+        <div class="benefits-grid">
+            <div class="benefit">
+                <h3>Cost Effective</h3>
+                <p>No API usage costs - runs entirely on GitHub's free infrastructure</p>
+            </div>
+            <div class="benefit">
+                <h3>Fast & Reliable</h3>
+                <p>Instant analysis with no external service dependencies</p>
+            </div>
+            <div class="benefit">
+                <h3>Industry Standards</h3>
+                <p>Uses established tools (Pylint, Flake8) trusted by the Python community</p>
+            </div>
+            <div class="benefit">
+                <h3>Educational</h3>
+                <p>Helps developers learn best practices and coding standards</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="setup">
+        <h2>Setup Instructions</h2>
+        <ol>
+            <li>Fork or clone the repository</li>
+            <li>Copy the <code>.github/workflows/</code> and <code>.github/scripts/</code> folders to your repository</li>
+            <li>The workflow will automatically install required dependencies (pylint, flake8)</li>
+            <li>Create a pull request to test the bot</li>
+            <li>The bot will post automated reviews on all future PRs</li>
+        </ol>
+    </section>
+
+    <section id="technologies">
+        <h2>Technologies Used</h2>
+        <ul>
+            <li><strong>GitHub Actions:</strong> CI/CD platform for automated workflows</li>
+            <li><strong>Python:</strong> Core scripting language</li>
+            <li><strong>Pylint:</strong> Static code analysis for code quality</li>
+            <li><strong>Flake8:</strong> Style guide enforcement and error detection</li>
+            <li><strong>Requests:</strong> HTTP library for GitHub API integration</li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 AI Code Review Bot. Built with GitHub Actions, Python, and Static Analysis Tools.</p>
+        <p><a href="https://github.com/MaanyaBS/ai-code-review-bot">View Source Code on GitHub</a></p>
+    </footer>
+</body>
+</html>
