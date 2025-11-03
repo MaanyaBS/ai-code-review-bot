@@ -49,7 +49,7 @@ Please provide the corrected code that fixes these issues. Return only the corre
 """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1000,
