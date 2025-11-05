@@ -10,6 +10,10 @@ from pylint.lint import Run as PylintRun
 from pylint.reporters.text import TextReporter
 from io import StringIO
 from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -209,7 +213,9 @@ Return only the corrected code without any explanation or markdown formatting.""
         return fixed_code, None
 
     except Exception as e:
-        return code, f"AI fix failed: {str(e)}"
+        # If OpenAI fails, provide a basic fix using formatters only
+        print(f"OpenAI API failed: {str(e)}. Using basic formatting fix.")
+        return format_code(code, language), "AI unavailable - applied basic formatting fixes only"
 
 def format_code(code, language='python'):
     """Format code using auto-formatters."""
@@ -343,7 +349,15 @@ def fix():
     fixed_code, error = fix_code_with_ai(code, issues, language)
 
     if error:
-        return jsonify({'error': error}), 500
+        # If AI fails, still return the formatted code
+        return jsonify({
+            'original_code': code,
+            'fixed_code': fixed_code,
+            'issues': issues,
+            'issues_count': len(issues),
+            'message': error,
+            'pr_result': None
+        })
 
     # Format the code
     fixed_code = format_code(fixed_code, language)
