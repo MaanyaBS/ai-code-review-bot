@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Review Bot - Static Analysis Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🤖 AI Code Review Bot</h1>
+        <p>Hybrid Code Quality Analysis: Automatic Formatters + Optional AI Corrections</p>
+    </header>
+
+    <section id="introduction">
+        <h2>Introduction</h2>
+        <p>The AI Code Review Bot is a revolutionary hybrid system that combines the speed of automatic code formatters with the intelligence of AI-powered corrections. It works locally on your machine and creates pull requests with fixed code, providing the best of both worlds: fast automatic fixes for common issues + intelligent AI corrections for complex problems.</p>
+    </section>
+
+    <section id="features">
+        <h2>Key Features</h2>
+        <ul>
+            <li><strong>Hybrid Approach:</strong> Automatic formatters (autopep8, isort) + Optional AI corrections</li>
+            <li><strong>Local Operation:</strong> Runs entirely on your machine, no GitHub Actions needed</li>
+            <li><strong>No API Required:</strong> Works with just automatic formatters for basic fixes</li>
+            <li><strong>Optional AI Enhancement:</strong> Add OpenAI API key for advanced code corrections</li>
+            <li><strong>PR Creation:</strong> Automatically creates pull requests for easy code review</li>
+            <li><strong>Industry Standards:</strong> Enforces PEP 8 style guidelines and best practices</li>
+            <li><strong>Multi-Tool Integration:</strong> Uses pylint, flake8, autopep8, and isort</li>
+        </ul>
+    </section>
+
+    <section id="how-it-works">
+        <h2>How It Works</h2>
+        <ol>
+            <li>Developer runs the bot locally: <code>python .github/scripts/review_pr.py</code></li>
+            <li>The bot scans all Python files in the current directory for linter issues</li>
+            <li><strong>First:</strong> Applies automatic formatting fixes using autopep8 and isort (fast, no API needed)</li>
+            <li><strong>Then:</strong> If OpenAI API key is provided, uses AI to fix remaining complex issues</li>
+            <li>Creates a new git branch with the fixes</li>
+            <li>Commits changes and pushes to GitHub</li>
+            <li>Automatically creates a pull request for code review</li>
+            <li>Merge the PR to apply the corrections to your codebase</li>
+        </ol>
+    </section>
+
+    <section id="architecture">
+        <h2>System Architecture</h2>
+        <div class="architecture-diagram">
+            <h3>Workflow Components</h3>
+            <ul>
+                <li><strong>.github/scripts/review_pr.py:</strong> Main Python script with hybrid approach</li>
+                <li><strong>.github/scripts/requirements.txt:</strong> Python dependencies (openai, pylint, flake8, autopep8, isort)</li>
+                <li><strong>Automatic Formatters:</strong> autopep8 (PEP8 formatting), isort (import sorting)</li>
+                <li><strong>Static Analysis Tools:</strong> Pylint for code quality, Flake8 for style enforcement</li>
+                <li><strong>AI Enhancement:</strong> OpenAI GPT-3.5 for complex code corrections (optional)</li>
+                <li><strong>Git Integration:</strong> Automatic branch creation, commit, and PR creation via GitHub CLI</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="demo">
+        <h2>Demo Output</h2>
+        <p>Here's an example of the bot's review output:</p>
+        <div class="code-example">
+            <h3>Example Code Review Comment</h3>
+            <blockquote>
+                <p><strong>Code Review</strong></p>
+                <p>Issues found by static analysis:</p>
+                <p><strong>Pylint issues in utils.py:</strong></p>
+                <pre>C0114: Missing module docstring (missing-module-docstring)
+C0116: Missing function or method docstring (missing-function-docstring)</pre>
+                <p><strong>Flake8 issues in utils.py:</strong></p>
+                <pre>utils.py:1:1: F401 'os' imported but unused</pre>
+                <p><strong>Pull Request Summary:</strong></p>
+                <ul>
+                    <li>Title: Add utility functions</li>
+                    <li>Files changed: 2</li>
+                </ul>
+                <p>Please address the linter issues for better code quality.</p>
+            </blockquote>
+        </div>
+        <div class="code-example">
+            <h3>Clean Code Example</h3>
+            <blockquote>
+                <p><strong>Code Review</strong></p>
+                <p>✅ No major issues found by static analysis tools (pylint, flake8).</p>
+                <p><strong>Pull Request Summary:</strong></p>
+                <ul>
+                    <li>Title: Refactor authentication module</li>
+                    <li>Files changed: 3</li>
+                </ul>
+                <p>The code looks good! Keep up the great work.</p>
+            </blockquote>
+        </div>
+    </section>
+
+    <section id="testing">
+        <h2>Comprehensive Testing</h2>
+        <p>The bot has been thoroughly tested with multiple scenarios:</p>
+        <ul>
+            <li><strong>Unit Testing:</strong> Individual component testing with mock data</li>
+            <li><strong>Integration Testing:</strong> End-to-end workflow simulation</li>
+            <li><strong>Edge Case Testing:</strong> Empty PRs, multiple files, linter failures</li>
+            <li><strong>Error Handling:</strong> Invalid events, missing environment variables</li>
+            <li><strong>Performance Testing:</strong> Large PRs with multiple code files</li>
+        </ul>
+    </section>
+
+    <section id="benefits">
+        <h2>Benefits</h2>
+        <div class="benefits-grid">
+            <div class="benefit">
+                <h3>Cost Effective</h3>
+                <p>No API usage costs - runs entirely on GitHub's free infrastructure</p>
+            </div>
+            <div class="benefit">
+                <h3>Fast & Reliable</h3>
+                <p>Instant analysis with no external service dependencies</p>
+            </div>
+            <div class="benefit">
+                <h3>Industry Standards</h3>
+                <p>Uses established tools (Pylint, Flake8) trusted by the Python community</p>
+            </div>
+            <div class="benefit">
+                <h3>Educational</h3>
+                <p>Helps developers learn best practices and coding standards</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="setup">
+        <h2>Setup Instructions</h2>
+        <ol>
+            <li>Fork or clone the repository</li>
+            <li>Install dependencies: <code>pip install -r .github/scripts/requirements.txt</code></li>
+            <li>Authenticate GitHub CLI: <code>gh auth login</code></li>
+            <li><strong>Optional:</strong> Set OpenAI API key for AI corrections: <code>set OPENAI_API_KEY=your_key_here</code></li>
+            <li>Run the bot locally: <code>python .github/scripts/review_pr.py</code></li>
+            <li>The bot will scan files, apply fixes, and create a pull request automatically</li>
+        </ol>
+    </section>
+
+    <section id="technologies">
+        <h2>Technologies Used</h2>
+        <ul>
+            <li><strong>Python:</strong> Core scripting language</li>
+            <li><strong>Pylint & Flake8:</strong> Static code analysis and style enforcement</li>
+            <li><strong>Autopep8 & Isort:</strong> Automatic code formatting and import sorting</li>
+            <li><strong>OpenAI GPT-3.5:</strong> AI-powered code corrections (optional)</li>
+            <li><strong>GitHub CLI:</strong> Command-line interface for GitHub operations</li>
+            <li><strong>Git:</strong> Version control for branch management and commits</li>
+        </ul>
+    </section>
+
+    <section id="demo-run">
+        <h2>Live Demo</h2>
+        <p>Click below to see the bot in action:</p>
+        <button onclick="runDemo()" class="demo-button">🚀 Run AI Code Review Bot Demo</button>
+        <div id="demo-output" class="demo-output" style="display: none;">
+            <h3>Demo Results:</h3>
+            <pre id="demo-results">
+🤖 AI Code Review Bot - Starting Analysis...
+
+✅ Detected 13 linter issues across 4 Python files
+✅ Applied automatic formatting fixes (autopep8, isort)
+✅ Created branch 'ai-code-fixes'
+✅ Committed changes with detailed message
+✅ Pushed to GitHub successfully
+✅ Created Pull Request #10: "🤖 AI Code Review: Auto-fixed linter issues"
+
+🎉 All fixes applied successfully! Ready for code review.
+            </pre>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 AI Code Review Bot. Built with Python, AI, and GitHub Integration.</p>
+        <p><a href="https://github.com/MaanyaBS/ai-code-review-bot">View Source Code on GitHub</a></p>
+    </footer>
+
+    <script>
+        function runDemo() {
+            const output = document.getElementById('demo-output');
+            const results = document.getElementById('demo-results');
+            output.style.display = 'block';
+
+            // Simulate typing effect
+            const text = results.textContent;
+            results.textContent = '';
+            let i = 0;
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    results.textContent += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                }
+            }, 50);
+        }
+    </script>
+</body>
+</html>
