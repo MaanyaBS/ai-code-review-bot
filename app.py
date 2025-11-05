@@ -231,61 +231,97 @@ def format_code(code, language='python'):
     return code
 
 def create_github_pr(original_code, fixed_code, issues, language='python'):
-    """Create a GitHub PR with the fixes."""
+    """Create a GitHub PR with the fixes in the current repository."""
     try:
-        # Create a temporary directory for the PR
-        with tempfile.TemporaryDirectory() as temp_dir:
-            repo_dir = Path(temp_dir) / "code-review-fix"
-            repo_dir.mkdir()
+        import time
+        # Create a unique branch name
+        branch_name = f"ai-code-fix-{int(time.time())}"
 
-            # Initialize git repo
-            subprocess.run(['git', 'init'], cwd=repo_dir, check=True, capture_output=True)
-            subprocess.run(['git', 'config', 'user.name', 'AI Code Review Bot'], cwd=repo_dir, check=True)
-            subprocess.run(['git', 'config', 'user.email', 'bot@ai-review.dev'], cwd=repo_dir, check=True)
+        # Create and switch to new branch
+        subprocess.run(['git', 'checkout', '-b', branch_name], check=True, capture_output=True)
 
-            # Create original and fixed files
-            original_file = repo_dir / f"original.{language}"
-            fixed_file = repo_dir / f"fixed.{language}"
+        # Create a file with the fixed code
+        fixed_file = f"ai_fixed_code.{language}"
+        with open(fixed_file, 'w') as f:
+            f.write(fixed_code)
 
-            with open(original_file, 'w') as f:
-                f.write(original_code)
-            with open(fixed_file, 'w') as f:
-                f.write(fixed_code)
+        # Create a summary file
+        summary_content = f"""# AI Code Review Fix
 
-            # Create README with explanation
-            readme_content = f"""# AI Code Review Fix
+This file contains AI-powered fixes for code quality issues.
 
-This PR contains AI-powered fixes for code quality issues.
+## Original Code:
+```python
+{original_code}
+```
+
+## Fixed Code:
+```python
+{fixed_code}
+```
 
 ## Issues Fixed:
 {chr(10).join([f"- **{issue['type']}**: {issue['message'][:100]}..." for issue in issues])}
 
-## Changes:
+## Changes Applied:
 - Applied automatic formatting
 - Fixed linter issues using AI assistance
 - Improved code quality and maintainability
-
-## Files Changed:
-- `original.{language}`: Original code
-- `fixed.{language}`: Corrected code
 """
 
-            with open(repo_dir / "README.md", 'w') as f:
-                f.write(readme_content)
+        with open("AI_FIX_SUMMARY.md", 'w') as f:
+            f.write(summary_content)
 
-            # Add and commit files
-            subprocess.run(['git', 'add', '.'], cwd=repo_dir, check=True)
-            subprocess.run(['git', 'commit', '-m', f'🤖 AI Code Review: Fixed {len(issues)} issues in {language} code'], cwd=repo_dir, check=True)
+        # Add and commit files
+        subprocess.run(['git', 'add', fixed_file, "AI_FIX_SUMMARY.md"], check=True)
+        commit_msg = f'🤖 AI Code Review: Fixed {len(issues)} issues in {language} code'
+        subprocess.run(['git', 'commit', '-m', commit_msg], check=True)
 
-            # Create GitHub repository (this would need user authentication)
-            # For now, we'll simulate the PR creation
+        # Push the branch
+        subprocess.run(['git', 'push', 'origin', branch_name], check=True)
+
+        # Create PR using GitHub CLI
+        pr_title = f'🤖 AI Code Review: Fixed {len(issues)} issues'
+        pr_body = f"""This Pull Request contains automatic fixes for code quality issues.
+
+## Issues Fixed:
+{chr(10).join([f"- **{issue['type']}**: {issue['message'][:100]}..." for issue in issues])}
+
+## Files Changed:
+- `{fixed_file}`: Fixed code
+- `AI_FIX_SUMMARY.md`: Summary of changes
+
+Created by AI Code Review Bot."""
+
+        pr_result = subprocess.run([
+            'gh', 'pr', 'create',
+            '--base', 'main',
+            '--head', branch_name,
+            '--title', pr_title,
+            '--body', pr_body
+        ], capture_output=True, text=True)
+
+        if pr_result.returncode == 0:
+            pr_url = pr_result.stdout.strip()
             return {
                 'success': True,
                 'message': f'PR created successfully with {len(issues)} fixes',
-                'pr_url': 'https://github.com/example/repo/pull/123'
+                'pr_url': pr_url
+            }
+        else:
+            # Switch back to main
+            subprocess.run(['git', 'checkout', 'main'], check=True)
+            return {
+                'success': False,
+                'message': f'Failed to create PR: {pr_result.stderr}'
             }
 
     except Exception as e:
+        # Try to switch back to main if something failed
+        try:
+            subprocess.run(['git', 'checkout', 'main'], check=False)
+        except:
+            pass
         return {
             'success': False,
             'message': f'Failed to create PR: {str(e)}'
