@@ -1,16 +1,17 @@
-from flask import Flask, render_template, request, jsonify
-import os
-import tempfile
-import subprocess
 import json
+import os
+import subprocess
+import tempfile
+from io import StringIO
 from pathlib import Path
+
 import autopep8
 import isort
+from dotenv import load_dotenv
+from flask import Flask, jsonify, render_template, request
+from openai import OpenAI
 from pylint.lint import Run as PylintRun
 from pylint.reporters.text import TextReporter
-from io import StringIO
-from openai import OpenAI
-from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -18,33 +19,60 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configure OpenAI
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY')) if os.getenv('OPENAI_API_KEY') else None
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY')
+                ) if os.getenv('OPENAI_API_KEY') else None
+
 
 def detect_language_from_code(code):
     """Basic language detection based on code patterns."""
     code_lower = code.lower().strip()
 
     # Python indicators
-    python_indicators = ['def ', 'import ', 'from ', 'class ', 'if __name__ ==', 'print(']
+    python_indicators = [
+        'def ',
+        'import ',
+        'from ',
+        'class ',
+        'if __name__ ==',
+        'print(']
     if any(indicator in code_lower for indicator in python_indicators):
         return 'python'
 
     # C/C++ indicators
-    c_indicators = ['#include', 'int main(', 'printf(', 'scanf(', 'std::', 'cout<<', 'cin>>']
+    c_indicators = [
+        '#include',
+        'int main(',
+        'printf(',
+        'scanf(',
+        'std::',
+        'cout<<',
+        'cin>>']
     if any(indicator in code_lower for indicator in c_indicators):
         return 'c' if '.h' in code_lower or 'malloc(' in code_lower else 'cpp'
 
     # JavaScript indicators
-    js_indicators = ['function ', 'const ', 'let ', 'var ', 'console.log(', 'document.', '=>']
+    js_indicators = [
+        'function ',
+        'const ',
+        'let ',
+        'var ',
+        'console.log(',
+        'document.',
+        '=>']
     if any(indicator in code_lower for indicator in js_indicators):
         return 'javascript'
 
     # Java indicators
-    java_indicators = ['public class', 'public static void main', 'system.out.println', 'import java.']
+    java_indicators = [
+        'public class',
+        'public static void main',
+        'system.out.println',
+        'import java.']
     if any(indicator in code_lower for indicator in java_indicators):
         return 'java'
 
     return 'unknown'
+
 
 def analyze_code_with_linters(code, language='python'):
     """Analyze code using linters and return issues."""
@@ -55,11 +83,13 @@ def analyze_code_with_linters(code, language='python'):
 
     # Check if selected language matches detected language
     if detected_language != 'unknown' and detected_language != language:
-        issues.append({
-            'type': 'language_mismatch',
-            'severity': 'error',
-            'message': f'Code appears to be {detected_language.upper()} but language is set to {language.upper()}. Please select the correct language.'
-        })
+        issues.append(
+            {
+                'type': 'language_mismatch',
+                'severity': 'error',
+                'message': f'Code appears to be {
+                    detected_language.upper()} but language is set to {
+                    language.upper()}. Please select the correct language.'})
         return issues
 
     if language == 'python':
@@ -79,7 +109,8 @@ def analyze_code_with_linters(code, language='python'):
             if pylint_results.strip():
                 lines = pylint_results.strip().split('\n')
                 for line in lines:
-                    if line.strip() and not line.startswith('*') and not line.startswith('-') and ':' in line:
+                    if line.strip() and not line.startswith(
+                            '*') and not line.startswith('-') and ':' in line:
                         # Extract the message part after the file path
                         parts = line.split(':')
                         if len(parts) >= 3:
@@ -93,8 +124,12 @@ def analyze_code_with_linters(code, language='python'):
 
             # Run flake8 and parse results
             try:
-                result = subprocess.run(['flake8', temp_file, '--max-line-length=88'],
-                                      capture_output=True, text=True, timeout=30)
+                result = subprocess.run(['flake8',
+                                         temp_file,
+                                         '--max-line-length=88'],
+                                        capture_output=True,
+                                        text=True,
+                                        timeout=30)
                 if result.stdout.strip():
                     lines = result.stdout.strip().split('\n')
                     for line in lines:
@@ -166,12 +201,14 @@ def analyze_code_with_linters(code, language='python'):
 
     return issues
 
+
 def fix_code_with_ai(code, issues, language='python'):
     """Use AI to fix code issues."""
     if not client:
         return code, "OpenAI API key not configured"
 
-    issues_text = "\n".join([f"- {issue['type']}: {issue['message']}" for issue in issues])
+    issues_text = "\n".join(
+        [f"- {issue['type']}: {issue['message']}" for issue in issues])
 
     prompt = f"""You are an expert code reviewer. Fix the following {language} code based on the linter issues:
 
@@ -215,7 +252,9 @@ Return only the corrected code without any explanation or markdown formatting.""
     except Exception as e:
         # If OpenAI fails, provide a basic fix using formatters only
         print(f"OpenAI API failed: {str(e)}. Using basic formatting fix.")
-        return format_code(code, language), "AI unavailable - applied basic formatting fixes only"
+        return format_code(
+            code, language), "AI unavailable - applied basic formatting fixes only"
+
 
 def format_code(code, language='python'):
     """Format code using auto-formatters."""
@@ -230,15 +269,18 @@ def format_code(code, language='python'):
 
     return code
 
+
 def create_github_pr(original_code, fixed_code, issues, language='python'):
     """Create a GitHub PR with the fixes in the current repository."""
     try:
         import time
+
         # Create a unique branch name
         branch_name = f"ai-code-fix-{int(time.time())}"
 
         # Create and switch to new branch
-        subprocess.run(['git', 'checkout', '-b', branch_name], check=True, capture_output=True)
+        subprocess.run(['git', 'checkout', '-b', branch_name],
+                       check=True, capture_output=True)
 
         # Create a file with the fixed code
         fixed_file = f"ai_fixed_code.{language}"
@@ -273,8 +315,10 @@ This file contains AI-powered fixes for code quality issues.
             f.write(summary_content)
 
         # Add and commit files
-        subprocess.run(['git', 'add', fixed_file, "AI_FIX_SUMMARY.md"], check=True)
-        commit_msg = f'🤖 AI Code Review: Fixed {len(issues)} issues in {language} code'
+        subprocess.run(['git', 'add', fixed_file,
+                       "AI_FIX_SUMMARY.md"], check=True)
+        commit_msg = f'🤖 AI Code Review: Fixed {
+            len(issues)} issues in {language} code'
         subprocess.run(['git', 'commit', '-m', commit_msg], check=True)
 
         # Push the branch
@@ -320,16 +364,18 @@ Created by AI Code Review Bot."""
         # Try to switch back to main if something failed
         try:
             subprocess.run(['git', 'checkout', 'main'], check=False)
-        except:
+        except BaseException:
             pass
         return {
             'success': False,
             'message': f'Failed to create PR: {str(e)}'
         }
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/health')
 def health():
@@ -338,11 +384,13 @@ def health():
         'message': 'AI Code Review Bot API is running'
     })
 
+
 @app.route('/status')
 def status():
     return jsonify({
         'openai_configured': client is not None
     })
+
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -360,6 +408,7 @@ def analyze():
         'issues': issues,
         'issues_count': len(issues)
     })
+
 
 @app.route('/fix', methods=['POST'])
 def fix():
@@ -410,6 +459,7 @@ def fix():
         'issues_count': len(issues),
         'pr_result': pr_result
     })
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
