@@ -1,8 +1,8 @@
-- [x] Update .github/scripts/requirements.txt: Add openai, remove autopep8 and isort
-- [x] Rewrite .github/scripts/review_pr.py: Convert to local script that detects linter issues, uses OpenAI API (with user-provided API key via env var) to generate and apply fixes, creates new branch, commits changes, pushes to GitHub, creates PR using gh CLI
-- [x] Update README.md: Describe the new local AI correction and PR creation process, including instructions to set OPENAI_API_KEY environment variable (user must provide their own key)
+- [x] Update .github/scripts/requirements.txt: Add openai, autopep8, and isort for hybrid approach
+- [x] Rewrite .github/scripts/review_pr.py: Convert to local script with hybrid approach - automatic formatters first, then optional AI fixes, creates PR using gh CLI
+- [x] Update README.md: Describe the hybrid approach (auto-formatters + optional AI), local operation, and PR creation
 - [x] Modify .github/workflows/ai-review.yml: Remove or disable PR triggers since the bot now runs locally
 - [x] Install dependencies (pip install -r .github/scripts/requirements.txt)
 - [x] Ensure GitHub CLI (gh) is installed for PR creation
-- [ ] Test locally with bad_code.py: Run script to detect issues, generate AI fixes, apply them, and create a test PR (requires OPENAI_API_KEY to be set)
 - [x] Update this TODO.md as tasks are completed
+- [ ] Test locally with bad_code.py: Run script to detect issues, apply auto-fixes, optionally use AI, and create a test PR

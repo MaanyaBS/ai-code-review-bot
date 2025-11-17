@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Review Bot - Code Analysis & Fixes</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .api-status {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .api-status.warning {
+            background: rgba(255,193,7,0.1);
+            border-color: rgba(255,193,7,0.3);
+            color: #ffc107;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .code-input-section {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .language-select {
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .code-input {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e1e5e9;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .results-section {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .issues-list {
+            margin-bottom: 30px;
+        }
+
+        .issues-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .issues-count {
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .issue-item {
+            background: white;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .issue-type {
+            font-weight: 600;
+            color: #dc3545;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .code-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .code-block {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .code-header {
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            font-weight: 600;
+        }
+
+        .code-content {
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .pr-result {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid #b3d7ff;
+        }
+
+        .pr-link {
+            color: #004085;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .code-comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-robot"></i> AI Code Review Bot</h1>
+            <p>Paste your code, get instant AI-powered fixes and improvements</p>
+            <div id="apiStatus" class="api-status" style="display: none;"></div>
+        </div>
+
+        <div class="main-content">
+            <div class="code-input-section">
+                <div class="form-group">
+                    <label for="language">Programming Language:</label>
+                    <select id="language" class="language-select">
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="code">Your Code:</label>
+                    <textarea id="code" class="code-input" placeholder="Paste your code here..."></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button id="analyzeBtn" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Verify Code
+                    </button>
+                    <button id="fixBtn" class="btn btn-secondary" disabled>
+                        <i class="fas fa-magic"></i> Fix with AI
+                    </button>
+                    <button id="prBtn" class="btn btn-secondary" disabled>
+                        <i class="fas fa-code-branch"></i> Create PR
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Analyzing your code with AI...</p>
+            </div>
+
+            <div id="results" class="results-section" style="display: none;">
+                <div id="message"></div>
+
+                <div id="issues" class="issues-list" style="display: none;">
+                    <div class="issues-header">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Issues Found
+                        <span id="issuesCount" class="issues-count">0</span>
+                    </div>
+                    <div id="issuesList"></div>
+                </div>
+
+                <div id="comparison" class="code-comparison" style="display: none;">
+                    <div class="code-block">
+                        <div class="code-header">Original Code</div>
+                        <pre id="originalCode" class="code-content language-python"></pre>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-header">Fixed Code</div>
+                        <pre id="fixedCode" class="code-content language-python"></pre>
+                    </div>
+                </div>
+
+                <div id="prResult" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const fixBtn = document.getElementById('fixBtn');
+            const prBtn = document.getElementById('prBtn');
+            const codeInput = document.getElementById('code');
+            const languageSelect = document.getElementById('language');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const issues = document.getElementById('issues');
+            const issuesList = document.getElementById('issuesList');
+            const issuesCount = document.getElementById('issuesCount');
+            const comparison = document.getElementById('comparison');
+            const originalCode = document.getElementById('originalCode');
+            const fixedCode = document.getElementById('fixedCode');
+            const message = document.getElementById('message');
+            const prResult = document.getElementById('prResult');
+
+            let currentIssues = [];
+            let currentFixedCode = '';
+
+            // Check API status on page load
+            async function checkAPIStatus() {
+                const apiStatus = document.getElementById('apiStatus');
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/health', {
+                        method: 'GET',
+                        signal: AbortSignal.timeout(5000) // 5 second timeout
+                    });
+
+                    if (response.ok) {
+                        apiStatus.textContent = '✅ API Connected';
+                        apiStatus.classList.remove('warning');
+                    } else {
+                        apiStatus.textContent = '⚠️ API Unavailable';
+                        apiStatus.classList.add('warning');
+                    }
+                } catch (error) {
+                    apiStatus.textContent = '⚠️ API Offline';
+                    apiStatus.classList.add('warning');
+                }
+                apiStatus.style.display = 'block';
+            }
+
+            // Analyze code
+            analyzeBtn.addEventListener('click', async function() {
+                const code = codeInput.value.trim();
+                const language = languageSelect.value;
+
+                if (!code) {
+                    showMessage('Please enter some code to analyze.', 'error');
+                    return;
+                }
+
+                showLoading(true);
+                hideResults();
+
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            code: code,
+                            language: language
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        currentIssues = data.issues || [];
+                        displayIssues(currentIssues);
+
+                        if (currentIssues.length > 0) {
+                            fixBtn.disabled = false;
+                            prBtn.disabled = false;
+                            showMessage(`Found ${currentIssues.length} issues that can be fixed!`, 'success');
+                        } else {
+                            fixBtn.disabled = true;
+                            prBtn.disabled = true;
+                            showMessage('Your code looks great! No issues found.', 'success');
+                        }
+                    } else {
+                        showMessage(data.error || 'Analysis failed.', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', 'error');
+                }
+
+                showLoading(false);
+            });
+
+            // Fix code with AI
+            fixBtn.addEventListener('click', async function() {
+                const code = codeInput.value.trim();
+                const language = languageSelect.value;
+
+                if (!code) {
+                    showMessage('Please enter some code to fix.', 'error');
+                    return;
+                }
+
+                showLoading(true);
+
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/fix', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            code: code,
+                            language: language,
+                            create_pr: false
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        currentFixedCode = data.fixed_code;
+                        displayComparison(code, currentFixedCode);
+                        showMessage('Code fixed successfully!', 'success');
+                    } else {
+                        showMessage(data.error || 'Fix failed.', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', 'error');
+                }
+
+                showLoading(false);
+            });
+
+            // Create PR
+            prBtn.addEventListener('click', async function() {
+                const code = codeInput.value.trim();
+                const language = languageSelect.value;
+
+                if (!code) {
+                    showMessage('Please enter some code to create PR.', 'error');
+                    return;
+                }
+
+                showLoading(true);
+
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/fix', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            code: code,
+                            language: language,
+                            create_pr: true
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        currentFixedCode = data.fixed_code;
+                        displayComparison(code, currentFixedCode);
+
+                        if (data.pr_result) {
+                            displayPRResult(data.pr_result);
+                        }
+
+                        showMessage('Code fixed and PR created!', 'success');
+                    } else {
+                        showMessage(data.error || 'PR creation failed.', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', 'error');
+                }
+
+                showLoading(false);
+            });
+
+            function showLoading(show) {
+                loading.style.display = show ? 'block' : 'none';
+                analyzeBtn.disabled = show;
+                fixBtn.disabled = show || currentIssues.length === 0;
+                prBtn.disabled = show || currentIssues.length === 0;
+            }
+
+            function hideResults() {
+                results.style.display = 'none';
+                issues.style.display = 'none';
+                comparison.style.display = 'none';
+                prResult.style.display = 'none';
+            }
+
+            function showMessage(text, type) {
+                message.innerHTML = `<div class="${type}-message">${text}</div>`;
+                results.style.display = 'block';
+            }
+
+            function displayIssues(issues) {
+                issuesCount.textContent = issues.length;
+                issuesList.innerHTML = '';
+
+                if (issues.length > 0) {
+                    issues.forEach(issue => {
+                        const issueDiv = document.createElement('div');
+                        issueDiv.className = 'issue-item';
+                        issueDiv.innerHTML = `
+                            <div class="issue-type">${issue.type}</div>
+                            <div>${issue.message}</div>
+                        `;
+                        issuesList.appendChild(issueDiv);
+                    });
+                    issues.style.display = 'block';
+                }
+            }
+
+            function displayComparison(original, fixed) {
+                originalCode.textContent = original;
+                fixedCode.textContent = fixed;
+
+                // Re-highlight Prism syntax
+                Prism.highlightElement(originalCode);
+                Prism.highlightElement(fixedCode);
+
+                comparison.style.display = 'grid';
+                results.style.display = 'block';
+            }
+
+            function displayPRResult(prResult) {
+                let html = '<div class="pr-result">';
+
+                if (prResult.success) {
+                    html += `<i class="fas fa-check-circle"></i> ${prResult.message}`;
+                    if (prResult.pr_url) {
+                        html += `<br><a href="${prResult.pr_url}" class="pr-link" target="_blank">View Pull Request</a>`;
+                    }
+                } else {
+                    html += `<i class="fas fa-exclamation-triangle"></i> ${prResult.message}`;
+                }
+
+                html += '</div>';
+                prResult.innerHTML = html;
+                prResult.style.display = 'block';
+            }
+
+            // Enable buttons when code is entered
+            codeInput.addEventListener('input', function() {
+                const hasCode = codeInput.value.trim().length > 0;
+                analyzeBtn.disabled = !hasCode;
+            });
+
+            // Initialize
+            analyzeBtn.disabled = true;
+            checkAPIStatus();
+        });
+    </script>
+</body>
+</html>
