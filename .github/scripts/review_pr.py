@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 import openai
 
+
 def get_openai_fix(code_snippet, error_message):
     """Use OpenAI to generate a fix for code issues."""
     try:
@@ -32,11 +33,13 @@ Provide only the corrected code without any explanation or markdown formatting.
         print(f"OpenAI API error: {e}")
         return None
 
+
 def apply_auto_fixes(file_path):
     """Apply automatic formatting fixes using autopep8 and isort."""
     try:
         # Apply autopep8 for PEP8 formatting
-        subprocess.run(['autopep8', '--in-place', '--aggressive', '--aggressive', file_path], check=True)
+        subprocess.run(['autopep8', '--in-place', '--aggressive',
+                       '--aggressive', file_path], check=True)
         # Apply isort for import sorting
         subprocess.run(['isort', '--profile=black', file_path], check=True)
         return True
@@ -44,13 +47,15 @@ def apply_auto_fixes(file_path):
         print(f"Auto-fix failed for {file_path}: {e}")
         return False
 
+
 def run_linters(file_path):
     """Run pylint and flake8 on a file and return issues."""
     issues = []
 
     try:
         # Run pylint
-        pylint_result = subprocess.run(['pylint', file_path, '--output-format=json'], capture_output=True, text=True)
+        pylint_result = subprocess.run(
+            ['pylint', file_path, '--output-format=json'], capture_output=True, text=True)
         if pylint_result.returncode != 0:
             pylint_data = json.loads(pylint_result.stdout)
             for issue in pylint_data:
@@ -67,22 +72,24 @@ def run_linters(file_path):
 
     try:
         # Run flake8
-        flake8_result = subprocess.run(['flake8', file_path, '--format=json'], capture_output=True, text=True)
+        flake8_result = subprocess.run(
+            ['flake8', file_path, '--format=json'], capture_output=True, text=True)
         if flake8_result.returncode != 0:
             flake8_data = json.loads(flake8_result.stdout)
             for issue in flake8_data:
-                issues.append({
-                    'type': 'flake8',
-                    'line': issue.get('line_number', 0),
-                    'column': issue.get('column_number', 0),
-                    'message': issue.get('description', ''),
-                    'code': issue.get('code', ''),
-                    'severity': 'error' if issue.get('code', '').startswith('E') else 'warning'
-                })
+                issues.append(
+                    {
+                        'type': 'flake8', 'line': issue.get(
+                            'line_number', 0), 'column': issue.get(
+                            'column_number', 0), 'message': issue.get(
+                            'description', ''), 'code': issue.get(
+                            'code', ''), 'severity': 'error' if issue.get(
+                            'code', '').startswith('E') else 'warning'})
     except Exception as e:
         print(f"Flake8 error for {file_path}: {e}")
 
     return issues
+
 
 def fix_code_with_ai(file_path, issues):
     """Use AI to fix complex issues that auto-formatters can't handle."""
@@ -98,7 +105,8 @@ def fix_code_with_ai(file_path, issues):
         fixed_any = False
 
         for issue in issues:
-            if issue['severity'] in ['error', 'warning'] and issue['type'] == 'pylint':
+            if issue['severity'] in ['error',
+                                     'warning'] and issue['type'] == 'pylint':
                 # Get context around the error
                 start_line = max(0, issue['line'] - 3)
                 end_line = min(len(lines), issue['line'] + 3)
@@ -112,7 +120,9 @@ def fix_code_with_ai(file_path, issues):
                     fixed_lines = ai_fix.split('\n')
                     lines[start_line:end_line] = fixed_lines
                     fixed_any = True
-                    print(f"Applied AI fix for {issue['symbol']} in {file_path}")
+                    print(
+                        f"Applied AI fix for {
+                            issue['symbol']} in {file_path}")
 
         if fixed_any:
             with open(file_path, 'w') as f:
@@ -123,6 +133,7 @@ def fix_code_with_ai(file_path, issues):
         print(f"AI fix error for {file_path}: {e}")
 
     return False
+
 
 def main():
     """Main function to run the AI code review bot locally."""
@@ -146,7 +157,8 @@ def main():
         print(f"\n🔍 Analyzing {file_str}...")
 
         # Skip files in .git, __pycache__, etc.
-        if any(part.startswith('.') or part == '__pycache__' for part in file_path.parts):
+        if any(part.startswith('.') or part ==
+               '__pycache__' for part in file_path.parts):
             continue
 
         # Run linters to find issues
@@ -178,7 +190,12 @@ def main():
             fixed_files.append(file_str)
 
     print(f"\n📊 Analysis Complete:")
-    print(f"   - Files analyzed: {len([f for f in python_files if not any(part.startswith('.') or part == '__pycache__' for part in Path(f).parts)])}")
+    print(
+        f"   - Files analyzed: {
+            len(
+                [
+                    f for f in python_files if not any(
+                        part.startswith('.') or part == '__pycache__' for part in Path(f).parts)])}")
     print(f"   - Total issues found: {total_issues}")
     print(f"   - Files with fixes applied: {len(fixed_files)}")
     print(f"   - Files with AI fixes: {len(ai_fixed_files)}")
@@ -194,12 +211,14 @@ def main():
 
             # Add and commit changes
             subprocess.run(['git', 'add', '.'], check=True)
-            commit_msg = f"Auto-fix code issues\n\n- Fixed {total_issues} linter issues\n- Applied formatting fixes to {len(fixed_files)} files\n- Used AI corrections for complex issues"
+            commit_msg = f"Auto-fix code issues\n\n- Fixed {total_issues} linter issues\n- Applied formatting fixes to {
+                len(fixed_files)} files\n- Used AI corrections for complex issues"
             subprocess.run(['git', 'commit', '-m', commit_msg], check=True)
             print("💾 Committed changes")
 
             # Push branch
-            subprocess.run(['git', 'push', '-u', 'origin', branch_name], check=True)
+            subprocess.run(
+                ['git', 'push', '-u', 'origin', branch_name], check=True)
             print("⬆️  Pushed to GitHub")
 
             # Create PR using GitHub CLI
@@ -223,7 +242,15 @@ This PR contains automatic fixes for code quality issues detected by linters.
 
 Merge this PR to apply the corrections to your codebase!"""
 
-            pr_result = subprocess.run(['gh', 'pr', 'create', '--title', pr_title, '--body', pr_body], capture_output=True, text=True)
+            pr_result = subprocess.run(['gh',
+                                        'pr',
+                                        'create',
+                                        '--title',
+                                        pr_title,
+                                        '--body',
+                                        pr_body],
+                                       capture_output=True,
+                                       text=True)
             if pr_result.returncode == 0:
                 print("🎉 Pull request created successfully!")
                 print(f"PR URL: {pr_result.stdout.strip()}")
@@ -234,6 +261,7 @@ Merge this PR to apply the corrections to your codebase!"""
             print(f"❌ Git operation failed: {e}")
     else:
         print("\n✅ No fixes needed - code is already clean!")
+
 
 if __name__ == "__main__":
     main()
