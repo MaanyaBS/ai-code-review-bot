@@ -1,0 +1,1 @@
+print('ping from CI trigger')\n

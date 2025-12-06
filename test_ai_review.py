@@ -4,6 +4,7 @@ Test file for AI code review bot
 This file contains some code that should trigger AI review comments
 """
 
+
 def calculate_fibonacci(n):
     """
     Calculate the nth Fibonacci number
@@ -19,7 +20,8 @@ def calculate_fibonacci(n):
     elif n == 1:
         return 1
     else:
-        return calculate_fibonacci(n-1) + calculate_fibonacci(n-2)
+        return calculate_fibonacci(n - 1) + calculate_fibonacci(n - 2)
+
 
 def main():
     """Main function to test Fibonacci calculation"""
@@ -27,6 +29,7 @@ def main():
     for i in range(10):
         result = calculate_fibonacci(i)
         print(f"Fibonacci({i}) = {result}")
+
 
 if __name__ == "__main__":
     main()
